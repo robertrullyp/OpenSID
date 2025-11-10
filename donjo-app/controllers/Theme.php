@@ -240,6 +240,8 @@ class Theme extends Admin_Controller
 
         ThemeModel::where('id', '!=', $id)->update(['status' => 0]);
 
+        cache()->forget('theme_active');
+
         redirect_with('success', 'Berhasil Ubah Data');
     }
 
