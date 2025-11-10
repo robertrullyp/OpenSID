@@ -160,9 +160,18 @@ class MY_Controller extends CI_Controller
             $appKeyDb = Config::appKey()->first();
         }
 
-        if (! empty($appKeyDb->app_key) && $appKey !== $appKeyDb->app_key) {
-            $this->session->cek_app_key = true;
-            redirect('koneksi_database/config');
+        $fileKey   = trim((string) $appKey);
+        $configKey = trim((string) ($appKeyDb->app_key ?? ''));
+
+        if ($configKey !== '') {
+            if ($fileKey !== $configKey) {
+                file_put_contents(DESAPATH . 'app_key', $configKey);
+                config()->set('app.key', $configKey);
+            }
+        } else {
+            $configKey = set_app_key();
+            $appKeyDb->update(['app_key' => $configKey]);
+            file_put_contents(DESAPATH . 'app_key', $configKey);
         }
 
         $this->cek_anjungan = $this->cekAnjungan();

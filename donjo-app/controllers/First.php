@@ -209,4 +209,9 @@ class First extends Web_Controller
     {
         redirect('/');
     }
+
+    public function index(): void
+    {
+        redirect('/');
+    }
 }
