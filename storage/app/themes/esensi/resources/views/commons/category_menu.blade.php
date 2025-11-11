@@ -11,7 +11,9 @@
 
     <div class="lg:py-3 px-3 lg:block transform transition-transform duration-300 lg:visible z-40"
         :class="{ 'bg-white text-gray-700 w-3/4 shadow fixed top-0 left-0 h-screen block inset-0 overflow-y-auto opacity-100 visible': catMenu, 'bg-white lg:bg-transparent fixed lg:relative -translate-x-full h-screen lg:h-auto lg:translate-x-0 opacity-0 lg:opacity-100': !catMenu }"
-        x-transitionx-on:click.stop x-trap.noscroll.inert="catMenu"
+        x-transition
+        x-on:click.stop
+        x-trap.noscroll.inert="catMenu"
     >
 
         <h5 class="text-h5 pt-5 pb-3 px-3 lg:hidden">Menu Kategori</h5>
