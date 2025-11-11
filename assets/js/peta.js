@@ -531,10 +531,16 @@ function getBaseLayers(peta, access_token, jenis_peta) {
 }
 
 function validateTokenMapbox(access_token) {
+  var token = (access_token ?? "").trim();
+
+  if (!token) {
+    return false;
+  }
+
   var isValid = false;
 
   $.ajax({
-    url: `https://api.mapbox.com/styles/v1/mapbox/streets-v11?access_token=${access_token}`,
+    url: `https://api.mapbox.com/styles/v1/mapbox/streets-v11?access_token=${token}`,
     type: 'GET',
     async: false,
     success: function (response) {

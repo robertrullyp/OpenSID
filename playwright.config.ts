@@ -85,8 +85,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'php -S 127.0.0.1:8000',
-    url: 'http://127.0.0.1:8000',
+    command: `php -S 127.0.0.1:${process.env.PLAYWRIGHT_SERVER_PORT ?? 8080}`,
+    url: `http://127.0.0.1:${process.env.PLAYWRIGHT_SERVER_PORT ?? 8080}`,
     reuseExistingServer: !process.env.CI,
   },
 });

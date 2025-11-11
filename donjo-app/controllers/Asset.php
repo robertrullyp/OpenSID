@@ -42,9 +42,29 @@ class Asset extends Web_Controller
 {
     public function serveTheme()
     {
-        $filename  = explode('?', request()->get('file'))[0];
-        $path      = FCPATH . theme_full_path() . '/assets/' . $filename;
-        $file      = new File($path);
+        $filename = request()->get('file');
+        $filename = is_string($filename) ? explode('?', $filename)[0] : '';
+        $filename = trim($filename);
+
+        if ($filename === '') {
+            show_404();
+        }
+
+        $filename = ltrim($filename, '/');
+        $basePath = realpath(FCPATH . theme_full_path() . '/assets');
+
+        if (! $basePath) {
+            show_404();
+        }
+
+        $path     = $basePath . '/' . $filename;
+        $realPath = realpath($path);
+
+        if (! $realPath || ! str_starts_with($realPath, $basePath) || is_dir($realPath)) {
+            show_404();
+        }
+
+        $file = new File($realPath);
         $mimeType  = $file->getMimeType();
         $mimeTypes = new MimeTypes();
         $mimeType  = $mimeTypes->getMimeTypes($file->getExtension())[0] ?? 'application/octet-stream';
@@ -54,7 +74,7 @@ class Asset extends Web_Controller
         header('Pragma: cache');
         header('Cache-Control: public, max-age=2592000');
 
-        readfile($path);
+        readfile($realPath);
 
         exit;
     }

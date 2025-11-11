@@ -5,6 +5,13 @@
         var csrfVal = "{{ $token_value }}";
 
         function getCsrfToken() {
+            const cookieEntry = document.cookie
+                .split('; ')
+                .find((entry) => entry.startsWith(`${csrfParam}=`));
+            if (cookieEntry) {
+                return decodeURIComponent(cookieEntry.split('=')[1]);
+            }
+
             return csrfVal;
         }
     </script>
