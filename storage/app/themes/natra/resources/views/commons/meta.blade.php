@@ -28,6 +28,15 @@
 </title>
 
 <link rel="shortcut icon" href="{{ favico_desa() }}" />
+@if ($trackingId = theme_config('analytics_id'))
+    <script data-cfasync="false" async src="https://www.googletagmanager.com/gtag/js?id={{ $trackingId }}"></script>
+    <script data-cfasync="false">
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ $trackingId }}');
+    </script>
+@endif
 <link rel="canonical" href="{{ $canonicalUrl }}" />
 <link rel="alternate" type="application/rss+xml" title="Feed {{ ucwords(setting('sebutan_desa')) . ' ' . $desa['nama_desa'] }}" href="{{ site_url('feed.xml') }}" />
 <link rel="stylesheet" href="{{ theme_asset('css/bootstrap.min.css') }}">

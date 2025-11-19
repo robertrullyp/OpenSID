@@ -99,5 +99,18 @@
         "readonly": false,
         "link": true,
         "group": "Pengaduan"
+    },
+    {
+        "judul": "ID Google Analytics",
+        "key": "analytics_id",
+        "value": "",
+        "type": "input-text",
+        "keterangan": "Masukkan Measurement ID Google Analytics (contoh: G-XXXXXXXXXX)",
+        "options": null,
+        "attributes": {
+            "placeholder": "G-XXXXXXXXXX"
+        },
+        "readonly": false,
+        "group": "Integrasi"
     }
 ]

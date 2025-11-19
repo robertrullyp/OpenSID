@@ -1,7 +1,7 @@
 User-agent: *
 
-Sitemap: /sitemap.xml
-Sitemap: /sitemap
+Sitemap: https://kapul.desa.id/sitemap.xml
+Sitemap: https://kapul.desa.id/sitemap
 
 Disallow: /app/
 Disallow: /backup_inkremental/
