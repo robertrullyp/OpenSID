@@ -205,7 +205,7 @@ if ($_SESSION['fm_key']) {
      | in Megabytes
      |
      */
-     'MaxSizeUpload' => 8,
+     'MaxSizeUpload' => 64,
      /*
      |--------------------------------------------------------------------------
      | File and Folder permission

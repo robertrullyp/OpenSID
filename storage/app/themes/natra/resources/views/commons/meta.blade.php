@@ -1,7 +1,11 @@
 @php defined('BASEPATH') || exit('No direct script access allowed'); @endphp
 @php defined('THEME_VERSION') or define('THEME_VERSION', 'v2409.0.0') @endphp
 @php defined('FOTO_TIDAK_TERSEDIA') or define('FOTO_TIDAK_TERSEDIA', theme_config('foto_tidak_tersedia') ? base_url(theme_config('foto_tidak_tersedia')) : asset('images/404-image-not-found.jpg')) @endphp
-@php $desa_title =  ucwords(setting('sebutan_desa')) . ' '. $desa['nama_desa'] . ' '. ucwords(setting('sebutan_kecamatan')) . ' '. $desa['nama_kecamatan'] . ' '. ucwords(setting('sebutan_kabupaten')) . ' '. $desa['nama_kabupaten']; @endphp
+@php
+    $desa_title = ucwords(setting('sebutan_desa')) . ' ' . $desa['nama_desa'] . ' ' . ucwords(setting('sebutan_kecamatan')) . ' ' . $desa['nama_kecamatan'] . ' ' . ucwords(setting('sebutan_kabupaten')) . ' ' . $desa['nama_kabupaten'];
+    $isSingleArtikel = isset($single_artikel) && ! empty($single_artikel['judul']);
+    $canonicalUrl = $isSingleArtikel ? site_url('artikel/' . buat_slug($single_artikel)) : current_url();
+@endphp
 
 <meta http-equiv="encoding" content="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -24,6 +28,8 @@
 </title>
 
 <link rel="shortcut icon" href="{{ favico_desa() }}" />
+<link rel="canonical" href="{{ $canonicalUrl }}" />
+<link rel="alternate" type="application/rss+xml" title="Feed {{ ucwords(setting('sebutan_desa')) . ' ' . $desa['nama_desa'] }}" href="{{ site_url('feed.xml') }}" />
 <link rel="stylesheet" href="{{ theme_asset('css/bootstrap.min.css') }}">
 <link rel="stylesheet" href="{{ theme_asset('css/font-awesome.min.css') }}">
 <link rel="stylesheet" href="{{ theme_asset('css/animate.css') }}">
@@ -40,14 +46,14 @@
 @stack('styles')
 @if (isset($single_artikel))
     <meta property="og:title" content="{{ htmlspecialchars($single_artikel['judul']) }}" />
-    <meta property="og:url" content="{{ site_url('artikel/' . buat_slug($single_artikel)) }}" />
+    <meta property="og:url" content="{{ $canonicalUrl }}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image" content="{{ base_url(LOKASI_FOTO_ARTIKEL . 'kecil_' . $single_artikel['gambar']) }}" />
     <meta property="og:description" content="{{ potong_teks($single_artikel['isi'], 300) }} ..." />
 @else
     <meta property="og:title" content="{{ $desa_title }}" />
-    <meta property="og:url" content="{{ site_url() }}" />
+    <meta property="og:url" content="{{ $canonicalUrl }}" />
     <meta property="og:description" content="{{ setting('website_title') . ' ' . $desa_title }}" />
 @endif
 <script type="application/x-javascript"> addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false); function hideURLbar(){ if (window.scrollY == 0) window.scrollTo(0,1); } </script>

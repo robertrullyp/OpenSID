@@ -197,7 +197,7 @@ $config = [
     | in Megabytes
     |
     */
-    'MaxSizeUpload' => 10,
+    'MaxSizeUpload' => 64,
     /*
     |--------------------------------------------------------------------------
     | File and Folder permission

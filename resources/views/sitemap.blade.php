@@ -10,12 +10,7 @@
     </sitemapindex>
 @else
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-        <url>
-            <loc>{{ site_url() }}</loc>
-            <priority>1.0</priority>
-            <changefreq>daily</changefreq>
-        </url>
-        @foreach ($artikel ?? [] as $item)
+        @foreach (($entries ?? collect()) as $item)
             <url>
                 <loc>{{ $item['loc'] }}</loc>
                 <lastmod>{{ $item['lastmod'] }}</lastmod>

@@ -268,12 +268,35 @@ class UploadHandler
     protected function isPHP($file): bool
     {
         $handle = fopen($file, 'rb');
-        $buffer = stream_get_contents($handle);
-        if (preg_match('/<\?php|<script|function|__halt_compiler|<html/i', $buffer)) {
+        if (! $handle) {
+            return false;
+        }
+
+        $chunkSize = 1024 * 1024; // 1MB is enough to scan for PHP markers.
+        $patterns = '/<\?(php|=)|__halt_compiler|<script|<html/i';
+
+        $checkBuffer = static function ($buffer) use ($patterns): bool {
+            return $buffer !== false && $buffer !== '' && preg_match($patterns, $buffer);
+        };
+
+        $buffer = fread($handle, $chunkSize);
+        if ($checkBuffer($buffer)) {
             fclose($handle);
 
             return true;
         }
+
+        $stat = fstat($handle);
+        if (($stat['size'] ?? 0) > $chunkSize) {
+            fseek($handle, -$chunkSize, SEEK_END);
+            $buffer = fread($handle, $chunkSize);
+            if ($checkBuffer($buffer)) {
+                fclose($handle);
+
+                return true;
+            }
+        }
+
         fclose($handle);
 
         return false;
@@ -471,6 +494,7 @@ class UploadHandler
             $name .= '.'.$matches[1];
         }
         if ($this->options['correct_image_extensions']) {
+            $extensions = [];
             switch ($this->imagetype($file_path)) {
                 case self::IMAGETYPE_JPEG:
                     $extensions = ['jpg', 'jpeg'];
@@ -483,12 +507,14 @@ class UploadHandler
                     break;
             }
             // Adjust incorrect image file extensions:
-            $parts = explode('.', $name);
-            $extIndex = count($parts) - 1;
-            $ext = strtolower(@$parts[$extIndex]);
-            if (!in_array($ext, $extensions)) {
-                $parts[$extIndex] = $extensions[0];
-                $name = implode('.', $parts);
+            if ($extensions) {
+                $parts = explode('.', $name);
+                $extIndex = count($parts) - 1;
+                $ext = strtolower(@$parts[$extIndex]);
+                if (!in_array($ext, $extensions, true)) {
+                    $parts[$extIndex] = $extensions[0];
+                    $name = implode('.', $parts);
+                }
             }
         }
         return $name;

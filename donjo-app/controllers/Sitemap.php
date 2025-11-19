@@ -36,7 +36,11 @@
  */
 
 use App\Models\Artikel;
+use App\Models\Menu;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\View;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -45,13 +49,15 @@ class Sitemap extends CI_Controller
 {
     public function index()
     {
-        $perSitemap = 40000;
-        $page       = (int) ($this->input->get('page') ?? 0);
+        $perSitemap    = 40000;
+        $page          = (int) max($this->input->get('page') ?? 0, 0);
+        $staticEntries = $this->collectPublicPages();
 
-        $baseQuery      = Artikel::without(['author', 'category', 'comments'])->active();
-        $articlesQuery  = (clone $baseQuery)->sitemap()->orderBy('tgl_upload', 'desc');
-        $totalArticles  = (clone $baseQuery)->count();
-        $totalPages     = (int) ceil($totalArticles / $perSitemap);
+        $baseQuery     = Artikel::without(['author', 'category', 'comments'])->active();
+        $articlesQuery = (clone $baseQuery)->sitemap()->orderBy('tgl_upload', 'desc');
+        $totalArticles = (clone $baseQuery)->count();
+        $totalEntries  = $staticEntries->count() + $totalArticles;
+        $totalPages    = $totalEntries > 0 ? (int) ceil($totalEntries / $perSitemap) : 1;
         $data['sitemapUrl'] = site_url($this->uri->uri_string());
 
         if ($page > 0) {
@@ -59,14 +65,14 @@ class Sitemap extends CI_Controller
                 show_404();
             }
 
-            $data['artikel'] = $this->prepareEntries($articlesQuery->forPage($page, $perSitemap)->get());
+            $data['entries'] = $this->getPageEntries($staticEntries, $articlesQuery, $page, $perSitemap);
             $data['isIndex'] = false;
         } elseif ($totalPages > 1) {
             $data['isIndex']     = true;
             $data['pages']       = $totalPages;
             $data['generatedAt'] = Carbon::now()->toAtomString();
         } else {
-            $data['artikel'] = $this->prepareEntries($articlesQuery->get());
+            $data['entries'] = $staticEntries->merge($this->prepareEntries($articlesQuery->get()));
             $data['isIndex'] = false;
         }
 
@@ -75,13 +81,93 @@ class Sitemap extends CI_Controller
         echo $content;
     }
 
-    private function prepareEntries($articles)
+    private function prepareEntries($articles): Collection
     {
-        return $articles->map(static function ($article) {
+        return $articles->map(function ($article) {
+            $rawDate = $article->getRawOriginal('tgl_upload');
+
+            if ($article->tgl_upload instanceof CarbonInterface) {
+                $lastmod = $article->tgl_upload;
+            } elseif (! empty($rawDate)) {
+                try {
+                    $lastmod = Carbon::parse($rawDate);
+                } catch (\Exception $e) {
+                    $lastmod = Carbon::now();
+                }
+            } else {
+                $lastmod = Carbon::now();
+            }
+
             return [
                 'loc'     => $article->url_slug,
-                'lastmod' => Carbon::parse($article->getRawOriginal('tgl_upload'))->toAtomString(),
+                'lastmod' => $lastmod->toAtomString(),
             ];
         });
+    }
+
+    private function collectPublicPages(): Collection
+    {
+        $entries = collect([$this->makeEntry(site_url())]);
+        $menus   = Menu::select(['link', 'link_tipe'])->whereEnabled(Menu::UNLOCK)->get();
+
+        foreach ($menus as $menu) {
+            $rawLink = trim($menu->link_url ?? '');
+
+            if ($rawLink === '' || $rawLink === '#') {
+                continue;
+            }
+
+            $url = filter_var($rawLink, FILTER_VALIDATE_URL)
+                ? $rawLink
+                : site_url(ltrim($rawLink, '/'));
+
+            if (! $this->isInternalUrl($url)) {
+                continue;
+            }
+
+            $entries->push($this->makeEntry($url));
+        }
+
+        return $entries->unique('loc')->values();
+    }
+
+    private function getPageEntries(Collection $staticEntries, Builder $articlesQuery, int $page, int $perPage): Collection
+    {
+        $totalStatic = $staticEntries->count();
+        $offset      = ($page - 1) * $perPage;
+        $remaining   = $perPage;
+        $entries     = collect();
+
+        if ($offset < $totalStatic) {
+            $staticChunk = $staticEntries->slice($offset, $remaining);
+            $entries     = $entries->merge($staticChunk);
+            $remaining   -= $staticChunk->count();
+            $articleOffset = 0;
+        } else {
+            $articleOffset = $offset - $totalStatic;
+        }
+
+        if ($remaining > 0) {
+            $articles = $this->prepareEntries((clone $articlesQuery)->skip($articleOffset)->take($remaining)->get());
+            $entries  = $entries->merge($articles);
+        }
+
+        return $entries->values();
+    }
+
+    private function makeEntry(string $loc, ?CarbonInterface $lastmod = null): array
+    {
+        return [
+            'loc'     => $loc,
+            'lastmod' => ($lastmod ?? Carbon::now())->toAtomString(),
+        ];
+    }
+
+    private function isInternalUrl(string $url): bool
+    {
+        $host     = parse_url($url, PHP_URL_HOST);
+        $siteHost = parse_url(site_url(), PHP_URL_HOST);
+
+        return $host === null || $host === $siteHost;
     }
 }
