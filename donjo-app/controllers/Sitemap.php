@@ -36,6 +36,7 @@
  */
 
 use App\Models\Artikel;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\View;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -44,12 +45,43 @@ class Sitemap extends CI_Controller
 {
     public function index()
     {
-        $data['artikel'] = Artikel::without(['author', 'category', 'comments'])->sitemap()
-            ->get()
-            ->toArray();
+        $perSitemap = 40000;
+        $page       = (int) ($this->input->get('page') ?? 0);
+
+        $baseQuery      = Artikel::without(['author', 'category', 'comments'])->active();
+        $articlesQuery  = (clone $baseQuery)->sitemap()->orderBy('tgl_upload', 'desc');
+        $totalArticles  = (clone $baseQuery)->count();
+        $totalPages     = (int) ceil($totalArticles / $perSitemap);
+        $data['sitemapUrl'] = site_url($this->uri->uri_string());
+
+        if ($page > 0) {
+            if ($totalPages === 0 || $page > $totalPages) {
+                show_404();
+            }
+
+            $data['artikel'] = $this->prepareEntries($articlesQuery->forPage($page, $perSitemap)->get());
+            $data['isIndex'] = false;
+        } elseif ($totalPages > 1) {
+            $data['isIndex']     = true;
+            $data['pages']       = $totalPages;
+            $data['generatedAt'] = Carbon::now()->toAtomString();
+        } else {
+            $data['artikel'] = $this->prepareEntries($articlesQuery->get());
+            $data['isIndex'] = false;
+        }
 
         $content = View::make('sitemap', $data)->render();
         header('Content-Type: text/xml; charset=UTF-8');
         echo $content;
+    }
+
+    private function prepareEntries($articles)
+    {
+        return $articles->map(static function ($article) {
+            return [
+                'loc'     => $article->url_slug,
+                'lastmod' => Carbon::parse($article->getRawOriginal('tgl_upload'))->toAtomString(),
+            ];
+        });
     }
 }
