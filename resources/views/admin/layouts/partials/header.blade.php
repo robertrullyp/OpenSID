@@ -1,7 +1,16 @@
 <header class="main-header">
+    @php
+        $logoPath = gambar_desa($desa['logo'] ?? setting('logo'));
+        $namaDesaLengkap = ucwords(setting('sebutan_desa') . ' ' . ($desa['nama_desa'] ?? ''));
+    @endphp
     <a href="{{ ci_route('/') }}" target="_blank" class="logo">
-        <span class="logo-mini"><b>SID</b></span>
-        <span class="logo-lg"><b>OpenSID</b></span>
+        <span class="logo-mini">
+            <img src="{{ $logoPath }}" alt="{{ $namaDesaLengkap }}" class="img-responsive center-block" style="max-height:40px;">
+        </span>
+        <span class="logo-lg" style="display:flex;align-items:center;">
+            <img src="{{ $logoPath }}" alt="{{ $namaDesaLengkap }}" class="img-responsive" style="max-height:40px;">
+            <span style="margin-left:8px;">{{ $namaDesaLengkap }}</span>
+        </span>
     </a>
 
     <nav class="navbar navbar-static-top">
